@@ -1,20 +1,69 @@
-<html lang="en">
-
+<!DOCTYPE html>
 <head>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="">
-  <title>Movie Time</title>
-  </head>
+<!-- Shaka Player compiled library: -->
+<!--src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.3.1/shaka-player.compiled.js"
 
+
+
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.3.1/shaka-player.compiled.js"></script>
+</head>
 <body>
-<center>
-  <video src="http://6157-193-187-102-215.ngrok.io/stream/movie/616246805e46f0ee3a99519c" controls>
-    <track label="ENG" kind="subtitles" srclang="en" src="http://localhost:3000/stream/subtitles" default>
-  </video>
-
-</center>
+<video
+id="video"
+width="640"
+controls
+autoplay
+></video>
 </body>
+<script>
+// Video Manifest URL
+const manifestUri =
+"https://7587-193-187-102-194.ngrok.io/directstream/content/movie/shaka-2/master.mpd";
 
+// Install all the required Polyfill
+shaka.polyfill.installAll();
+
+if (!shaka.Player.isBrowserSupported()){
+throw new Error("Browser not supported !")
+};
+
+const video = document.getElementById("video");
+//Shaka Player Reference provides all methods and properties.
+const player = new shaka.Player(video);
+
+if(shaka.Player.isBrowserSupported()){
+  console.info(`Everything good.`);
+}else{
+  console.error(`Browser not supported !`);
+}
+
+//DRM setup
+player.configure({
+  drm: {
+    servers: {
+      'com.widevine.alpha': 'https://widevine-dash.ezdrm.com/proxy?pX=282295&CustomData=this_is_signed_url',
+    }    
+  }
+});
+//Auth headers
+player
+.getNetworkingEngine()
+.registerRequestFilter(function (type, request) {
+// Only add headers to license requests:
+if (type == shaka.net.NetworkingEngine.RequestType.LICENSE) {
+// This is the specific header name and value the server wants:
+request.headers["user-identify-token"] = "vsolutionsltd";
+request.headers["Bypass-Tunnel-Reminder"] = ["bypass"]; //Bypass localtunnel Landing Page
+}
+});
+//Error handling
+//player.addEventListener("error", onErrorEvent);
+player
+.load(manifestUri)
+.then(() => console.log("Video Load successful"))
+.catch((error) =>
+console.error("Error code", error.code, "object", error)
+);
+</script>
 </html>
